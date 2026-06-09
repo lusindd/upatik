@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistem Perbaikan Perangkat — UPA TIK Poltekba</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
+
+  :root {
+    --blue:       #1A56CC;
+    --blue-light: #E8F0FD;
+    --blue-mid:   #C2D5F8;
+    --green:      #16A34A;
+    --green-light:#DCFCE7;
+    --orange:     #EA580C;
+    --orange-light:#FFF0E6;
+    --red:        #DC2626;
+    --red-light:  #FEE2E2;
+    --gray-50:    #F8FAFC;
+    --gray-100:   #F1F5F9;
+    --gray-200:   #E2E8F0;
+    --gray-400:   #94A3B8;
+    --gray-600:   #475569;
+    --gray-800:   #1E293B;
+    --white:      #FFFFFF;
+    --radius:     10px;
+    --shadow:     0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-800);
+    min-height: 100vh;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-icon {
+    width: 32px; height: 32px;
+    background: var(--blue);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px;
+  }
+  .brand-name { font-size: 14px; font-weight: 600; color: var(--gray-800); }
+  .brand-sub  { font-size: 11px; color: var(--gray-400); }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--gray-200);
+    background: var(--white); color: var(--gray-600);
+    transition: background .15s, border-color .15s;
+    text-decoration: none;
+  }
+  .btn:hover { background: var(--gray-100); }
+  .btn-primary { background: var(--blue); color: white; border-color: var(--blue); }
+  .btn-primary:hover { background: #1445AA; border-color: #1445AA; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-danger { background: var(--red-light); color: var(--red); border-color: #FECACA; }
+  .btn-danger:hover { background: #FEE2E2; }
+  .btn-ghost { border-color: transparent; background: transparent; }
+  .btn-ghost:hover { background: var(--gray-100); }
+
+  /* ── PAGE LAYOUT ── */
+  .page { display: none; }
+  .page.active { display: block; }
+  .container { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+
+  /* ── HERO (halaman jurusan) ── */
+  .hero {
+    background: linear-gradient(135deg, #1A56CC 0%, #2563EB 60%, #3B82F6 100%);
+    padding: 40px 24px 32px;
+    text-align: center;
+    color: white;
+  }
+  .hero h1 { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .hero p  { font-size: 14px; opacity: .85; max-width: 420px; margin: 0 auto 20px; }
+  .hero-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .btn-white { background: white; color: var(--blue); border-color: white; }
+  .btn-white:hover { background: var(--blue-light); }
+  .btn-outline-white { background: transparent; color: white; border-color: rgba(255,255,255,.5); }
+  .btn-outline-white:hover { background: rgba(255,255,255,.1); }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 13px; font-weight: 600; color: var(--gray-600);
+    text-transform: uppercase; letter-spacing: .5px; margin-bottom: 16px;
+  }
+
+  /* ── FORM ── */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-grid.g3 { grid-template-columns: 1fr 1fr 1fr; }
+  .full { grid-column: 1 / -1; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label { font-size: 12px; font-weight: 500; color: var(--gray-600); }
+  .field input, .field select, .field textarea {
+    font-size: 13px; font-family: inherit;
+    padding: 8px 11px;
+    border: 1px solid var(--gray-200);
+    border-radius: 8px;
+    background: var(--white);
+    color: var(--gray-800);
+    width: 100%;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: none; border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(26,86,204,.1);
+  }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .required { color: var(--red); }
+
+  /* ── FILE UPLOAD ── */
+  .upload-area {
+    border: 2px dashed var(--gray-200);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .upload-area:hover { border-color: var(--blue); background: var(--blue-light); }
+  .upload-area.has-file { border-color: var(--green); background: var(--green-light); }
+  .upload-icon { font-size: 24px; margin-bottom: 6px; }
+  .upload-text { font-size: 13px; color: var(--gray-600); }
+  .upload-sub  { font-size: 11px; color: var(--gray-400); margin-top: 3px; }
+  #fileInput { display: none; }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block; padding: 3px 9px;
+    border-radius: 99px; font-size: 11px; font-weight: 500;
+  }
+  .badge-menunggu { background: var(--orange-light); color: var(--orange); }
+  .badge-proses   { background: var(--blue-light);   color: var(--blue); }
+  .badge-selesai  { background: var(--green-light);  color: var(--green); }
+  .badge-gagal    { background: var(--red-light);    color: var(--red); }
+  .badge-pc      { background: #EDE9FE; color: #5B21B6; }
+  .badge-lcd     { background: #D1FAE5; color: #065F46; }
+  .badge-printer { background: #FFE4E6; color: #9F1239; }
+
+  /* ── STATS ── */
+  .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+  .stat { background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 14px 16px; }
+  .stat-val { font-size: 26px; font-weight: 600; line-height: 1.1; }
+  .stat-lbl { font-size: 12px; color: var(--gray-400); margin-top: 3px; }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { font-size: 11px; font-weight: 600; color: var(--gray-400); text-transform: uppercase;
+       letter-spacing: .4px; padding: 10px 12px; border-bottom: 1px solid var(--gray-200); text-align: left; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--gray-50); }
+  .ticket-id { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--gray-600); }
+
+  /* ── FILTERS ── */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .filters input, .filters select {
+    font-size: 13px; font-family: inherit;
+    padding: 7px 10px; border-radius: 8px;
+    border: 1px solid var(--gray-200);
+    background: var(--white); color: var(--gray-800);
+  }
+  .filters input { flex: 1; min-width: 160px; }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--gray-200); }
+  .tab {
+    padding: 8px 16px; font-size: 13px; font-weight: 500;
+    color: var(--gray-400); cursor: pointer; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; transition: color .15s, border-color .15s;
+  }
+  .tab:hover { color: var(--gray-800); }
+  .tab.active { color: var(--blue); border-color: var(--blue); }
+
+  /* ── SUCCESS BOX ── */
+  .success-box {
+    background: var(--green-light); border: 1px solid #86EFAC;
+    border-radius: var(--radius); padding: 28px; text-align: center;
+  }
+  .success-icon { font-size: 40px; margin-bottom: 12px; }
+  .success-ticket {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 26px; font-weight: 600; color: var(--green);
+    margin-bottom: 8px;
+  }
+  .success-msg { font-size: 13px; color: #166534; }
+
+  /* ── PIN PAGE ── */
+  .pin-page { max-width: 360px; margin: 80px auto; padding: 0 24px; text-align: center; }
+  .pin-page h2 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+  .pin-page p  { font-size: 13px; color: var(--gray-400); margin-bottom: 24px; }
+
+  /* ── MODAL ── */
+  .modal-bg {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,.4); z-index: 200;
+    align-items: center; justify-content: center; padding: 16px;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--white); border-radius: 12px;
+    box-shadow: var(--shadow);
+    width: min(540px, 100%); max-height: 90vh; overflow-y: auto;
+    padding: 24px;
+  }
+  .modal-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+  .modal-title { font-size: 15px; font-weight: 600; }
+  .info-grid { display: grid; grid-template-columns: 120px 1fr; gap: 6px 12px; font-size: 13px; margin-bottom: 18px; }
+  .info-lbl { color: var(--gray-400); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--gray-800); color: white;
+    padding: 11px 18px; border-radius: 8px; font-size: 13px;
+    opacity: 0; pointer-events: none; z-index: 999;
+    transition: opacity .25s, transform .25s;
+    transform: translateY(8px);
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { background: var(--green); }
+  .toast.error   { background: var(--red); }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 40px 20px; color: var(--gray-400); font-size: 13px; }
+  .empty-icon { font-size: 32px; margin-bottom: 8px; }
+
+  /* ── LOADING ── */
+  .loading { text-align: center; padding: 40px; color: var(--gray-400); font-size: 13px; }
+  .spinner {
+    display: inline-block; width: 24px; height: 24px;
+    border: 2px solid var(--gray-200); border-top-color: var(--blue);
+    border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .form-grid, .form-grid.g3 { grid-template-columns: 1fr; }
+    .full { grid-column: 1; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .container { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">🔧</div>
+    <div>
+      <div class="brand-name">UPA TIK Poltekba</div>
+      <div class="brand-sub">Sistem Perbaikan Perangkat</div>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-sm" onclick="openTrack()">🔍 Cek Status</button>
+    <button class="btn btn-sm" id="adminBtn" onclick="goAdmin()">🔒 UPA TIK</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- PAGE: JURUSAN                          -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page active" id="pgJurusan">
+  <div class="hero">
+    <h1>Permohonan Perbaikan Perangkat</h1>
+    <p>Isi formulir di bawah untuk mengajukan perbaikan PC, LCD, atau Printer ke UPA TIK Poltekba.</p>
+    <div class="hero-actions">
+      <button class="btn btn-white btn-sm" onclick="openTrack()">🔍 Cek Status Tiket</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="formArea">
+
+      <!-- Data Pemohon -->
+      <div class="card">
+        <div class="card-title">Data Pemohon</div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Jurusan / Unit <span class="required">*</span></label>
+            <select id="jJurusan">
+              <option value="">— Pilih Jurusan —</option>
+              <option>Teknik Informatika</option>
+              <option>Sistem Informasi</option>
+              <option>Teknik Elektro</option>
+              <option>Teknik Mesin</option>
+              <option>Teknik Sipil</option>
+              <option>Akuntansi</option>
+              <option>Manajemen</option>
+              <option>Hukum</option>
+              <option>FKIP</option>
+              <option>Rektorat</option>
+              <option>Perpustakaan</option>
+              <option>BAAK</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Nama Penanggung Jawab <span class="required">*</span></label>
+            <input type="text" id="jPJ" placeholder="Nama lengkap">
+          </div>
+          <div class="field full">
+            <label>No. HP / WhatsApp <span class="required">*</span></label>
+            <input type="text" id="jHP" placeholder="cth: 08123456789">
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail Perangkat -->
+      <div class="card">
+        <div class="card-title">Detail Perangkat &amp; Kerusakan</div>
+        <div class="form-grid g3">
+          <div class="field">
+            <label>Jenis Perangkat <span class="required">*</span></label>
+            <select id="jJenis">
+              <option>PC</option>
+              <option>LCD</option>
+              <option>Printer</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Jumlah Unit</label>
+            <input type="number" id="jJml" value="1" min="1">
+          </div>
+          <div class="field">
+            <label>No. Inventaris</label>
+            <input type="text" id="jInv" placeholder="Opsional">
+          </div>
+          <div class="field full">
+            <label>Keluhan / Kerusakan <span class="required">*</span></label>
+            <textarea id="jKeluhan" placeholder="Jelaskan kerusakan yang terjadi secara detail..."></textarea>
+          </div>
+          <div class="field full">
+            <label>Keterangan Tambahan</label>
+            <textarea id="jKet" placeholder="Kapan mulai rusak, sudah dicoba diperbaiki sendiri, dll (opsional)..." style="min-height:60px"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Surat -->
+      <div class="card">
+        <div class="card-title">Surat Permohonan</div>
+        <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-icon">📄</div>
+          <div class="upload-text" id="uploadText">Klik untuk upload surat permohonan</div>
+          <div class="upload-sub">PDF atau gambar (JPG, PNG) — maks. 5 MB</div>
+        </div>
+        <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFile(this)">
+      </div>
+
+      <div style="display:flex; gap:10px">
+        <button class="btn btn-primary" onclick="submitPermohonan()" id="submitBtn">
+          📤 Kirim Permohonan
+        </button>
+      </div>
+
+    </div><!-- /formArea -->
+
+    <div id="successArea" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- PAGE: PIN                              -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" id="pgPin">
+  <div class="pin-page">
+    <div style="font-size:40px;margin-bottom:16px">🔐</div>
+    <h2>Dashboard UPA TIK</h2>
+    <p>Masukkan PIN untuk mengakses dashboard monitoring</p>
+    <div class="card" style="text-align:left">
+      <div class="field">
+        <label>PIN</label>
+        <input type="password" id="pinInput" placeholder="Masukkan PIN" maxlength="6"
+               onkeydown="if(event.key==='Enter') checkPin()">
+      </div>
+      <div id="pinErr" style="font-size:12px;color:var(--red);margin-top:8px;display:none">
+        PIN salah. Coba lagi.
+      </div>
+      <div style="margin-top:14px;display:flex;gap:8px">
+        <button class="btn btn-primary" style="flex:1" onclick="checkPin()">Masuk</button>
+        <button class="btn" onclick="showPage('pgJurusan')">Kembali</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- PAGE: DASHBOARD ADMIN                 -->
+<!-- ═══════════════════════════════════════ -->
+<div class="page" id="pgAdmin">
+  <div class="container">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-size:18px;font-weight:600">Dashboard Monitoring</div>
+        <div style="font-size:13px;color:var(--gray-400);margin-top:2px">UPA TIK Poltekba</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm" onclick="loadAdmin()">🔄 Refresh</button>
+        <button class="btn btn-sm" onclick="logout()">Keluar</button>
+      </div>
+    </div>
+
+    <div class="stats" id="adminStats">
+      <div class="stat"><div class="spinner"></div></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" onclick="setTab('semua',this)">Semua</div>
+      <div class="tab" onclick="setTab('Menunggu',this)">Menunggu</div>
+      <div class="tab" onclick="setTab('Proses',this)">Proses</div>
+      <div class="tab" onclick="setTab('Selesai',this)">Selesai</div>
+    </div>
+
+    <div class="card">
+      <div class="filters">
+        <input type="text" id="aSearch" placeholder="Cari jurusan, perangkat, keluhan..." oninput="renderTable()">
+        <select id="aJenis" onchange="renderTable()">
+          <option value="">Semua Jenis</option>
+          <option>PC</option><option>LCD</option><option>Printer</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Tiket</th>
+            <th>Tanggal</th>
+            <th>Jurusan</th>
+            <th>Perangkat</th>
+            <th>Keluhan</th>
+            <th>Status</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="adminTbl">
+            <tr><td colspan="7" class="loading"><div class="spinner"></div><br>Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- MODAL: CEK STATUS                     -->
+<!-- ═══════════════════════════════════════ -->
+<div class="modal-bg" id="trackModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">🔍 Cek Status Permohonan</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('trackModal')">✕</button>
+    </div>
+    <div class="field">
+      <label>Nomor Tiket</label>
+      <input type="text" id="trackInput" placeholder="cth: TIK-20260001"
+             onkeydown="if(event.key==='Enter') doTrack()">
+    </div>
+    <div style="margin-top:12px">
+      <button class="btn btn-primary btn-sm" onclick="doTrack()">Cek Status</button>
+    </div>
+    <div id="trackResult" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- MODAL: DETAIL TIKET (ADMIN)           -->
+<!-- ═══════════════════════════════════════ -->
+<div class="modal-bg" id="detailModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="detailTitle">Detail Tiket</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('detailModal')">✕</button>
+    </div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SCRIPT                                -->
+<!-- ═══════════════════════════════════════ -->
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbznUXreTVttlm6WBo71w6WdLO56AD_jQSg4J5zKbX9lvQGwdG1eelnIIhU97pBUVeRkTg/exec';
+
+let allRecords = [];
+let activeTab  = 'semua';
+let editingId  = null;
+let fileData   = null;
+
+// ── UTILS ──
+function today() {
+  return new Date().toISOString().slice(0,10);
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const p = String(d).slice(0,10).split('-');
+  return `${p[2]}/${p[1]}/${p[0]}`;
+}
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2800);
+}
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function badgeStatus(s) {
+  const map = { Menunggu:'menunggu', Proses:'proses', Selesai:'selesai', Gagal:'gagal' };
+  return `<span class="badge badge-${map[s]||'menunggu'}">${s}</span>`;
+}
+function badgeJenis(j) {
+  const map = { PC:'pc', LCD:'lcd', Printer:'printer' };
+  return `<span class="badge badge-${map[j]||'pc'}">${j}</span>`;
+}
+
+// ── API CALLS (JSONP for GET, form POST for writes) ──
+function apiGet(params) {
+  return new Promise((resolve, reject) => {
+    const cb = 'cb_' + Date.now();
+    const url = API_URL + '?' + new URLSearchParams({...params, callback: cb});
+    const script = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); reject(new Error('Timeout')); }, 15000);
+    function cleanup() { clearTimeout(timer); delete window[cb]; if(script.parentNode) document.body.removeChild(script); }
+    window[cb] = (data) => { cleanup(); resolve(data); };
+    script.onerror = () => { cleanup(); reject(new Error('Gagal konek ke server')); };
+    script.src = url;
+    document.body.appendChild(script);
+  });
+}
+async function apiPost(body) {
+  const params = new URLSearchParams({...body, callback: 'none'});
+  const res = await fetch(API_URL + '?' + params.toString(), { method: 'GET' });
+  const text = await res.text();
+  const clean = text.replace(/^none\(/, '').replace(/\)$/, '');
+  return JSON.parse(clean);
+}
+
+// ── FILE UPLOAD ──
+function handleFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('File terlalu besar (maks 5 MB)', 'error'); return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const base64 = e.target.result.split(',')[1];
+    fileData = { base64, name: file.name, mime: file.type };
+    document.getElementById('uploadArea').classList.add('has-file');
+    document.getElementById('uploadText').textContent = '✅ ' + file.name;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── SUBMIT PERMOHONAN ──
+async function submitPermohonan() {
+  const jurusan = document.getElementById('jJurusan').value;
+  const pj      = document.getElementById('jPJ').value.trim();
+  const hp      = document.getElementById('jHP').value.trim();
+  const keluhan = document.getElementById('jKeluhan').value.trim();
+
+  if (!jurusan || !pj || !hp || !keluhan) {
+    showToast('Jurusan, PJ, HP, dan keluhan wajib diisi!', 'error'); return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Mengirim...';
+
+  try {
+    const payload = {
+      action: 'submit',
+      tanggal: today(),
+      jurusan, pj, hp,
+      jenis: document.getElementById('jJenis').value,
+      jumlah: document.getElementById('jJml').value,
+      inventaris: document.getElementById('jInv').value.trim(),
+      keluhan,
+      keterangan: document.getElementById('jKet').value.trim(),
+    };
+    if (fileData) {
+      payload.fileBase64 = fileData.base64;
+      payload.fileName   = fileData.name;
+      payload.fileMime   = fileData.mime;
+    }
+
+    const res = await apiPost(payload);
+    if (!res.success) throw new Error(res.message);
+
+    document.getElementById('formArea').style.display = 'none';
+    document.getElementById('successArea').style.display = 'block';
+    document.getElementById('successArea').innerHTML = `
+      <div class="success-box">
+        <div class="success-icon">✅</div>
+        <div class="success-ticket">${res.id}</div>
+        <div class="success-msg">
+          Permohonan berhasil dikirim!<br>
+          Simpan nomor tiket di atas untuk memantau status perbaikan.
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:16px">
+        <button class="btn btn-primary" onclick="resetForm()">Ajukan Permohonan Baru</button>
+      </div>
+    `;
+  } catch(err) {
+    showToast('Gagal mengirim: ' + err.message, 'error');
+    btn.disabled = false;
+    btn.textContent = '📤 Kirim Permohonan';
+  }
+}
+
+function resetForm() {
+  document.getElementById('formArea').style.display = 'block';
+  document.getElementById('successArea').style.display = 'none';
+  ['jPJ','jHP','jInv','jKeluhan','jKet'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('jJurusan').value = '';
+  document.getElementById('jJml').value = 1;
+  document.getElementById('uploadArea').classList.remove('has-file');
+  document.getElementById('uploadText').textContent = 'Klik untuk upload surat permohonan';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('submitBtn').textContent = '📤 Kirim Permohonan';
+  fileData = null;
+}
+
+// ── CEK STATUS ──
+function openTrack() {
+  document.getElementById('trackResult').innerHTML = '';
+  document.getElementById('trackInput').value = '';
+  openModal('trackModal');
+}
+
+async function doTrack() {
+  const id = document.getElementById('trackInput').value.trim().toUpperCase();
+  if (!id) return;
+  document.getElementById('trackResult').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const res = await apiGet({ action: 'getOne', id });
+    if (!res.success) {
+      document.getElementById('trackResult').innerHTML =
+        `<div style="color:var(--red);font-size:13px;margin-top:8px">❌ Tiket <strong>${id}</strong> tidak ditemukan.</div>`;
+      return;
+    }
+    const r = res.data;
+    document.getElementById('trackResult').innerHTML = `
+      <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:8px;padding:14px;margin-top:4px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600">${r.ID}</span>
+          ${badgeStatus(r.Status)}
+        </div>
+        <div style="font-size:12px;color:var(--gray-400);margin-bottom:6px">${r.Jurusan} · ${r.Jenis} · ${fmtDate(r.Tanggal)}</div>
+        <div style="font-size:13px;margin-bottom:6px">${r.Keluhan}</div>
+        ${r.Teknisi ? `<div style="font-size:12px;color:var(--gray-600)">👨‍🔧 Teknisi: ${r.Teknisi}</div>` : ''}
+        ${r.Catatan ? `<div style="font-size:12px;color:var(--gray-600);margin-top:4px">📝 ${r.Catatan}</div>` : ''}
+        ${r.TglSelesai ? `<div style="font-size:12px;color:var(--green);margin-top:4px">✅ Selesai: ${fmtDate(r.TglSelesai)}</div>` : ''}
+      </div>
+    `;
+  } catch(err) {
+    document.getElementById('trackResult').innerHTML =
+      `<div style="color:var(--red);font-size:13px">Gagal mengambil data.</div>`;
+  }
+}
+
+// ── ADMIN ──
+function goAdmin() {
+  document.getElementById('pinErr').style.display = 'none';
+  document.getElementById('pinInput').value = '';
+  showPage('pgPin');
+  setTimeout(() => document.getElementById('pinInput').focus(), 200);
+}
+
+async function checkPin() {
+  const pin = document.getElementById('pinInput').value;
+  try {
+    const res = await apiGet({ action: 'checkPin', pin });
+    if (res.success) {
+      showPage('pgAdmin');
+      loadAdmin();
+      document.getElementById('adminBtn').textContent = '🔓 UPA TIK';
+    } else {
+      document.getElementById('pinErr').style.display = 'block';
+    }
+  } catch {
+    document.getElementById('pinErr').style.display = 'block';
+  }
+}
+
+function logout() {
+  showPage('pgJurusan');
+  document.getElementById('adminBtn').textContent = '🔒 UPA TIK';
+}
+
+async function loadAdmin() {
+  document.getElementById('adminTbl').innerHTML =
+    '<tr><td colspan="7" class="loading"><div class="spinner"></div><br>Memuat data...</td></tr>';
+  try {
+    const res = await apiGet({ action: 'getAll' });
+    if (!res.success) throw new Error(res.message);
+    allRecords = res.data;
+    renderStats();
+    renderTable();
+  } catch(err) {
+    document.getElementById('adminTbl').innerHTML =
+      `<tr><td colspan="7" class="empty">Gagal memuat data: ${err.message}</td></tr>`;
+  }
+}
+
+function renderStats() {
+  const t = allRecords.length;
+  const m = allRecords.filter(r => r.Status === 'Menunggu').length;
+  const p = allRecords.filter(r => r.Status === 'Proses').length;
+  const s = allRecords.filter(r => r.Status === 'Selesai').length;
+  document.getElementById('adminStats').innerHTML = `
+    <div class="stat"><div class="stat-val">${t}</div><div class="stat-lbl">Total Tiket</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--orange)">${m}</div><div class="stat-lbl">Menunggu</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--blue)">${p}</div><div class="stat-lbl">Proses</div></div>
+    <div class="stat"><div class="stat-val" style="color:var(--green)">${s}</div><div class="stat-lbl">Selesai</div></div>
+  `;
+}
+
+function setTab(val, el) {
+  activeTab = val;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderTable();
+}
+
+function renderTable() {
+  const q  = document.getElementById('aSearch').value.toLowerCase();
+  const fJ = document.getElementById('aJenis').value;
+  let data = allRecords.filter(r => {
+    if (activeTab !== 'semua' && r.Status !== activeTab) return false;
+    if (fJ && r.Jenis !== fJ) return false;
+    if (q && !`${r.Jurusan}${r.Jenis}${r.Keluhan}${r.PJ}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const tbl = document.getElementById('adminTbl');
+  if (!data.length) {
+    tbl.innerHTML = `<tr><td colspan="7" class="empty"><div class="empty-icon">📭</div>Tidak ada data</td></tr>`;
+    return;
+  }
+
+  tbl.innerHTML = data.map(r => `
+    <tr>
+      <td><span class="ticket-id">${r.ID}</span></td>
+      <td style="white-space:nowrap;font-size:12px;color:var(--gray-400)">${fmtDate(r.Tanggal)}</td>
+      <td>
+        <div style="font-size:13px">${r.Jurusan}</div>
+        <div style="font-size:11px;color:var(--gray-400)">${r.PJ || ''}</div>
+      </td>
+      <td>${badgeJenis(r.Jenis)}<div style="font-size:11px;color:var(--gray-400);margin-top:3px">${r.Jumlah} unit</div></td>
+      <td style="max-width:180px;font-size:13px">${r.Keluhan}</td>
+      <td>
+        ${badgeStatus(r.Status)}
+        ${r.Teknisi ? `<div style="font-size:11px;color:var(--gray-400);margin-top:3px">${r.Teknisi}</div>` : ''}
+      </td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" onclick="openDetail('${r.ID}')" title="Edit">✏️</button>
+        <button class="btn btn-ghost btn-sm" onclick="delRecord('${r.ID}')" title="Hapus">🗑️</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ── DETAIL / EDIT TIKET ──
+function openDetail(id) {
+  editingId = id;
+  const r = allRecords.find(x => x.ID === id);
+  document.getElementById('detailTitle').textContent = `Tiket ${r.ID}`;
+  document.getElementById('detailBody').innerHTML = `
+    <div class="info-grid" style="margin-bottom:16px">
+      <span class="info-lbl">Jurusan</span><span>${r.Jurusan}</span>
+      <span class="info-lbl">Penanggung Jawab</span><span>${r.PJ || '—'}</span>
+      <span class="info-lbl">No. HP</span><span>${r.HP || '—'}</span>
+      <span class="info-lbl">Tanggal Masuk</span><span>${fmtDate(r.Tanggal)}</span>
+      <span class="info-lbl">Perangkat</span><span>${r.Jenis} — ${r.Jumlah} unit${r.Inventaris ? ' ('+r.Inventaris+')' : ''}</span>
+      <span class="info-lbl">Keluhan</span><span>${r.Keluhan}</span>
+      ${r.Keterangan ? `<span class="info-lbl">Keterangan</span><span>${r.Keterangan}</span>` : ''}
+      ${r.FileName ? `<span class="info-lbl">Surat</span><span><a href="${r.FileURL}" target="_blank" class="btn btn-sm" style="display:inline-flex">📄 ${r.FileName}</a></span>` : ''}
+    </div>
+    <div style="border-top:1px solid var(--gray-200);padding-top:16px">
+      <div class="card-title" style="margin-bottom:12px">Update Status</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>Teknisi</label>
+          <input type="text" id="mTeknisi" value="${r.Teknisi||''}" placeholder="Nama teknisi">
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="mStatus">
+            <option ${r.Status==='Menunggu'?'selected':''}>Menunggu</option>
+            <option ${r.Status==='Proses'?'selected':''}>Proses</option>
+            <option ${r.Status==='Selesai'?'selected':''}>Selesai</option>
+            <option ${r.Status==='Gagal'?'selected':''}>Gagal</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Tanggal Selesai</label>
+          <input type="date" id="mTglSelesai" value="${r.TglSelesai||''}">
+        </div>
+        <div class="field full">
+          <label>Catatan Perbaikan</label>
+          <textarea id="mCatatan">${r.Catatan||''}</textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-primary btn-sm" onclick="saveDetail()">Simpan</button>
+        <button class="btn btn-sm" onclick="closeModal('detailModal')">Batal</button>
+      </div>
+    </div>
+  `;
+  openModal('detailModal');
+}
+
+async function saveDetail() {
+  try {
+    const res = await apiPost({
+      action: 'update',
+      id: editingId,
+      teknisi:    document.getElementById('mTeknisi').value.trim(),
+      status:     document.getElementById('mStatus').value,
+      tglSelesai: document.getElementById('mTglSelesai').value,
+      catatan:    document.getElementById('mCatatan').value.trim(),
+    });
+    if (!res.success) throw new Error(res.message);
+    closeModal('detailModal');
+    showToast('Data berhasil diperbarui', 'success');
+    loadAdmin();
+  } catch(err) {
+    showToast('Gagal menyimpan: ' + err.message, 'error');
+  }
+}
+
+async function delRecord(id) {
+  if (!confirm(`Hapus tiket ${id}?`)) return;
+  try {
+    const res = await apiPost({ action: 'delete', id });
+    if (!res.success) throw new Error(res.message);
+    showToast('Tiket dihapus', 'success');
+    loadAdmin();
+  } catch(err) {
+    showToast('Gagal menghapus: ' + err.message, 'error');
+  }
+}
+</script>
+</body>
+</html>
