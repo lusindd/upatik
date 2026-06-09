@@ -311,27 +311,19 @@
           <div class="field">
             <label>Jurusan / Unit <span class="required">*</span></label>
             <select id="jJurusan">
-              <option value="">— Pilih Jurusan/ Unit —</option>
-              <option>Teknik Sipil</option>
-              <option>Rekayasa Elektro</option>
+              <option value="">— Pilih Jurusan —</option>
+              <option>Teknik Informatika</option>
+              <option>Sistem Informasi</option>
+              <option>Teknik Elektro</option>
               <option>Teknik Mesin</option>
-              <option>Bisnis</option>
-              <option>Pariwisata Sipil</option>
-              <option>UPA TIK</option>
-              <option>P2MPP</option>
-              <option>UPA Layanan Uji Kompetensi</option>
-              <option>Keuangan</option>
-              <option>Kepegawaian</option>
-              <option>UPA Perpustakaan</option>
-              <option>Akademik</option>
-	      <option>Perencanaan</option>
-	      <option>Umum</option>
- 	      <option>P3M</option>
-	      <option>SPI</option>
-	      <option>Pengadaan</option>
-	      <option>UPA Pengembangan Karier dan Kewirausahaan</option>
-	      <option>UPA Perawatan dan Perbaikan</option>
-	      <option>Kemahasiswaan & Kerjasama</option>
+              <option>Teknik Sipil</option>
+              <option>Akuntansi</option>
+              <option>Manajemen</option>
+              <option>Hukum</option>
+              <option>FKIP</option>
+              <option>Rektorat</option>
+              <option>Perpustakaan</option>
+              <option>BAAK</option>
             </select>
           </div>
           <div class="field">
@@ -355,7 +347,6 @@
               <option>PC</option>
               <option>LCD</option>
               <option>Printer</option>
-	      <option>Lainnya</option>
             </select>
           </div>
           <div class="field">
@@ -522,9 +513,7 @@
 <!-- SCRIPT                                -->
 <!-- ═══════════════════════════════════════ -->
 <script>
-// ── GANTI DENGAN URL APPS SCRIPT KAMU ──
 const API_URL = 'https://script.google.com/macros/s/AKfycbznUXreTVttlm6WBo71w6WdLO56AD_jQSg4J5zKbX9lvQGwdG1eelnIIhU97pBUVeRkTg/exec';
-// ────────────────────────────────────────
 
 let allRecords = [];
 let activeTab  = 'semua';
@@ -563,18 +552,26 @@ function badgeJenis(j) {
   return `<span class="badge badge-${map[j]||'pc'}">${j}</span>`;
 }
 
-// ── API CALLS ──
-async function apiGet(params) {
-  const url = API_URL + '?' + new URLSearchParams(params);
-  const res = await fetch(url);
-  return res.json();
+// ── API CALLS (JSONP for GET, form POST for writes) ──
+function apiGet(params) {
+  return new Promise((resolve, reject) => {
+    const cb = 'cb_' + Date.now();
+    const url = API_URL + '?' + new URLSearchParams({...params, callback: cb});
+    const script = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); reject(new Error('Timeout')); }, 15000);
+    function cleanup() { clearTimeout(timer); delete window[cb]; if(script.parentNode) document.body.removeChild(script); }
+    window[cb] = (data) => { cleanup(); resolve(data); };
+    script.onerror = () => { cleanup(); reject(new Error('Gagal konek ke server')); };
+    script.src = url;
+    document.body.appendChild(script);
+  });
 }
 async function apiPost(body) {
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    body: JSON.stringify(body)
-  });
-  return res.json();
+  const params = new URLSearchParams({...body, callback: 'none'});
+  const res = await fetch(API_URL + '?' + params.toString(), { method: 'GET' });
+  const text = await res.text();
+  const clean = text.replace(/^none\(/, '').replace(/\)$/, '');
+  return JSON.parse(clean);
 }
 
 // ── FILE UPLOAD ──
