@@ -628,6 +628,7 @@ async function submitPermohonan() {
   btn.textContent = '⏳ Mengirim...';
 
   try {
+    // Step 1: Kirim data form dulu (tanpa file)
     const payload = {
       action: 'submit',
       tanggal: today(),
@@ -638,21 +639,47 @@ async function submitPermohonan() {
       keluhan,
       keterangan: document.getElementById('jKet').value.trim(),
     };
-    if (fileData) {
-      payload.fileBase64 = fileData.base64;
-      payload.fileName   = fileData.name;
-      payload.fileMime   = fileData.mime;
-    }
 
-    const res = await apiPost(payload);
+    const res = await apiGet(payload);
     if (!res.success) throw new Error(res.message);
+
+    const ticketId = res.id;
+
+    // Step 2: Upload file jika ada (terpisah)
+    if (fileData) {
+      btn.textContent = '⏳ Upload surat...';
+      await apiGet({
+        action: 'uploadFile',
+        id: ticketId,
+        fileName: fileData.name,
+        fileMime: fileData.mime,
+        fileBase64: fileData.base64.substring(0, 1000), // chunk 1
+        chunk: '1',
+        totalChunks: Math.ceil(fileData.base64.length / 1000).toString()
+      });
+      // Upload chunk by chunk
+      const chunkSize = 50000;
+      const chunks = Math.ceil(fileData.base64.length / chunkSize);
+      for (let i = 0; i < chunks; i++) {
+        const chunk = fileData.base64.substring(i * chunkSize, (i+1) * chunkSize);
+        await apiGet({
+          action: 'uploadChunk',
+          id: ticketId,
+          chunk: String(i),
+          data: chunk,
+          isLast: i === chunks - 1 ? '1' : '0',
+          fileName: fileData.name,
+          fileMime: fileData.mime
+        });
+      }
+    }
 
     document.getElementById('formArea').style.display = 'none';
     document.getElementById('successArea').style.display = 'block';
     document.getElementById('successArea').innerHTML = `
       <div class="success-box">
         <div class="success-icon">✅</div>
-        <div class="success-ticket">${res.id}</div>
+        <div class="success-ticket">${ticketId}</div>
         <div class="success-msg">
           Permohonan berhasil dikirim!<br>
           Simpan nomor tiket di atas untuk memantau status perbaikan.
