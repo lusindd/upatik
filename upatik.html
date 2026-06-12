@@ -612,6 +612,24 @@ function handleFile(input) {
   reader.readAsDataURL(file);
 }
 
+// ── UPLOAD FILE VIA POST ──
+async function uploadFilePost(id, fileObj, isFoto) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({
+      action: 'uploadFile',
+      id: id,
+      fileName: fileObj.name,
+      fileMime: fileObj.mime,
+      fileBase64: fileObj.base64,
+      isFoto: isFoto ? '1' : ''
+    })
+  });
+  const text = await res.text();
+  return JSON.parse(text);
+}
+
 // ── SUBMIT PERMOHONAN ──
 async function submitPermohonan() {
   const jurusan = document.getElementById('jJurusan').value;
@@ -628,8 +646,8 @@ async function submitPermohonan() {
   btn.textContent = '⏳ Mengirim...';
 
   try {
-    // Step 1: Kirim data form dulu (tanpa file)
-    const payload = {
+    // Step 1: Kirim data form via JSONP (tanpa file)
+    const res = await apiGet({
       action: 'submit',
       tanggal: today(),
       jurusan, pj, hp,
@@ -638,40 +656,15 @@ async function submitPermohonan() {
       inventaris: document.getElementById('jInv').value.trim(),
       keluhan,
       keterangan: document.getElementById('jKet').value.trim(),
-    };
-
-    const res = await apiGet(payload);
+    });
     if (!res.success) throw new Error(res.message);
 
     const ticketId = res.id;
 
-    // Step 2: Upload file jika ada (terpisah)
+    // Step 2: Upload file via POST jika ada
     if (fileData) {
       btn.textContent = '⏳ Upload surat...';
-      await apiGet({
-        action: 'uploadFile',
-        id: ticketId,
-        fileName: fileData.name,
-        fileMime: fileData.mime,
-        fileBase64: fileData.base64.substring(0, 1000), // chunk 1
-        chunk: '1',
-        totalChunks: Math.ceil(fileData.base64.length / 1000).toString()
-      });
-      // Upload chunk by chunk
-      const chunkSize = 50000;
-      const chunks = Math.ceil(fileData.base64.length / chunkSize);
-      for (let i = 0; i < chunks; i++) {
-        const chunk = fileData.base64.substring(i * chunkSize, (i+1) * chunkSize);
-        await apiGet({
-          action: 'uploadChunk',
-          id: ticketId,
-          chunk: String(i),
-          data: chunk,
-          isLast: i === chunks - 1 ? '1' : '0',
-          fileName: fileData.name,
-          fileMime: fileData.mime
-        });
-      }
+      await uploadFilePost(ticketId, fileData, false);
     }
 
     document.getElementById('formArea').style.display = 'none';
@@ -939,21 +932,23 @@ async function saveDetail() {
   btn.disabled = true;
   btn.textContent = '⏳ Menyimpan...';
   try {
-    const payload = {
+    // Update status via JSONP
+    const res = await apiGet({
       action: 'update',
       id: editingId,
       teknisi:    document.getElementById('mTeknisi').value.trim(),
       status:     document.getElementById('mStatus').value,
       tglSelesai: document.getElementById('mTglSelesai').value,
       catatan:    document.getElementById('mCatatan').value.trim(),
-    };
-    if (fotoData) {
-      payload.fotoBase64 = fotoData.base64;
-      payload.fotoName   = fotoData.name;
-      payload.fotoMime   = fotoData.mime;
-    }
-    const res = await apiPost(payload);
+    });
     if (!res.success) throw new Error(res.message);
+
+    // Upload foto via POST jika ada
+    if (fotoData) {
+      btn.textContent = '⏳ Upload foto...';
+      await uploadFilePost(editingId, fotoData, true);
+    }
+
     closeModal('detailModal');
     showToast('Data berhasil diperbarui', 'success');
     fotoData = null;
