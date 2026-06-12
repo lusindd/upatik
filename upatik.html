@@ -423,7 +423,7 @@
     <div class="card" style="text-align:left">
       <div class="field">
         <label>PIN</label>
-        <input type="password" id="pinInput" placeholder="Masukkan PIN" maxlength="20"
+        <input type="password" id="pinInput" placeholder="Masukkan PIN" maxlength="6"
                onkeydown="if(event.key==='Enter') checkPin()">
       </div>
       <div id="pinErr" style="font-size:12px;color:var(--red);margin-top:8px;display:none">
@@ -535,6 +535,7 @@
 <!-- ═══════════════════════════════════════ -->
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbxXkeIGAs8gMrMWvnpqGwonNVUnyNqzO0dDtHJyg8xGOr51uLM7wClkUDRHNReMvWQrjg/exec';
+const API_TOKEN = 'Jangkauanluas.'; // Harus sama dengan di Code.gs
 
 let allRecords = [];
 let activeTab  = 'semua';
@@ -577,7 +578,7 @@ function badgeJenis(j) {
 function apiGet(params) {
   return new Promise((resolve, reject) => {
     const cb = 'cb_' + Date.now();
-    const url = API_URL + '?' + new URLSearchParams({...params, callback: cb});
+    const url = API_URL + '?' + new URLSearchParams({...params, token: API_TOKEN, callback: cb});
     const script = document.createElement('script');
     const timer = setTimeout(() => { cleanup(); reject(new Error('Timeout')); }, 15000);
     function cleanup() { clearTimeout(timer); delete window[cb]; if(script.parentNode) document.body.removeChild(script); }
@@ -588,7 +589,7 @@ function apiGet(params) {
   });
 }
 async function apiPost(body) {
-  const params = new URLSearchParams({...body, callback: 'none'});
+  const params = new URLSearchParams({...body, token: API_TOKEN, callback: 'none'});
   const res = await fetch(API_URL + '?' + params.toString(), { method: 'GET' });
   const text = await res.text();
   const clean = text.replace(/^none\(/, '').replace(/\)$/, '');
@@ -619,6 +620,7 @@ async function uploadFilePost(id, fileObj, isFoto) {
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify({
       action: 'uploadFile',
+      token: API_TOKEN,
       id: id,
       fileName: fileObj.name,
       fileMime: fileObj.mime,
@@ -752,6 +754,7 @@ function goAdmin() {
 
 async function checkPin() {
   const pin = document.getElementById('pinInput').value;
+  const errEl = document.getElementById('pinErr');
   try {
     const res = await apiGet({ action: 'checkPin', pin });
     if (res.success) {
@@ -759,10 +762,21 @@ async function checkPin() {
       loadAdmin();
       document.getElementById('adminBtn').textContent = '🔓 UPA TIK';
     } else {
-      document.getElementById('pinErr').style.display = 'block';
+      errEl.style.display = 'block';
+      errEl.textContent = res.message || 'PIN salah. Coba lagi.';
+      if (res.locked) {
+        errEl.style.color = 'var(--red)';
+        document.getElementById('pinInput').disabled = true;
+        // Re-enable setelah 15 menit
+        setTimeout(() => {
+          document.getElementById('pinInput').disabled = false;
+          errEl.style.display = 'none';
+        }, 15 * 60 * 1000);
+      }
     }
   } catch {
-    document.getElementById('pinErr').style.display = 'block';
+    errEl.style.display = 'block';
+    errEl.textContent = 'Gagal konek ke server.';
   }
 }
 
